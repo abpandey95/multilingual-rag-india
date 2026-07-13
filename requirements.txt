@@ -1,0 +1,5 @@
+sentence-transformers>=2.7.0
+rank_bm25>=0.2.2
+indic-nlp-library>=0.92
+numpy>=1.26.0
+torch>=2.1.0
