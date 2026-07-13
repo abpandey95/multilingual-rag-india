@@ -46,6 +46,31 @@ distribution they run on. A pipeline that works beautifully on English, cloud-co
 wrong — it's answering a narrower question than "does this work for India's full linguistic
 reality?" This repo is one attempt at closing that gap, stage by stage.
 
+## Cache invalidation module
+
+`cache_invalidation.py` addresses a problem the blueprint above doesn't cover:
+what happens after a source document changes. It adds dependency-tracked
+freshness handling on top of the retrieval pipeline:
+
+1. **Document-level hashing** — detects whether a source document changed at
+   all (`check_staleness`)
+2. **Chunk-level diffing** — identifies exactly which chunks were added,
+   removed, or changed, so only those get re-embedded (`diff_chunks`)
+3. **Dependency-tracked answer cache** — tracks which cached query → answer
+   pairs were generated from which chunks, so an edit purges only the
+   affected cached answers, not the whole cache (`AnswerCache`,
+   `on_document_updated`)
+
+Run a quick smoke test directly:
+
+```bash
+python cache_invalidation.py
+```
+
+Or open `cache_invalidation_demo.ipynb` for a full walkthrough against a
+synthetic Hindi policy document, contrasting chunk-level invalidation with
+what naive whole-document invalidation would have cost.
+
 ## Related work
 
 - A. K. Pandey and S. S. Roy, "Extractive Question Answering Over Ancient Scriptures Texts Using
