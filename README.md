@@ -71,6 +71,32 @@ Or open `cache_invalidation_demo.ipynb` for a full walkthrough against a
 synthetic Hindi policy document, contrasting chunk-level invalidation with
 what naive whole-document invalidation would have cost.
 
+## Agentic RAG — retrieval as a decision, not a fixed step
+
+`agentic-rag/agentic_rag.py` addresses a different problem: most RAG chains
+retrieve unconditionally on every query, even when retrieval isn't needed or
+the first pass comes back weak. This module wires a small LangGraph graph
+that makes retrieval a decision rather than a fixed step:
+
+1. **Router node** — decides whether a query needs retrieval at all
+   (`make_router_node`)
+2. **Confidence-check node** — scores whether a retrieval pass is actually
+   good enough to answer from, instead of trusting it blindly
+   (`make_confidence_check_node`)
+3. **Reformulate-and-retry node** — rewrites the query and re-retrieves when
+   confidence is low, up to a configurable retry cap
+   (`make_reformulate_node`)
+4. **Honest fallback** — returns an explicit "I don't know" instead of
+   guessing once retries are exhausted (`honest_fallback_node`)
+
+All model/retriever calls are injected as callables, so the graph is testable
+without a live model or vector store.
+
+Open `agentic-rag/agentic_rag_demo.ipynb` for an executed walkthrough on
+three queries that each take a different path through the graph: a direct
+answer with no retrieval, a single successful retrieval pass, and a
+reformulate-and-retry pass on a vaguely worded query.
+
 ## Related work
 
 - A. K. Pandey and S. S. Roy, "Extractive Question Answering Over Ancient Scriptures Texts Using
