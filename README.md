@@ -71,6 +71,39 @@ Or open `cache_invalidation_demo.ipynb` for a full walkthrough against a
 synthetic Hindi policy document, contrasting chunk-level invalidation with
 what naive whole-document invalidation would have cost.
 
+## Retrieval accuracy — HyDE, hybrid RRF, and reranking
+
+`retrieval_accuracy.py` addresses the most common RAG accuracy failure:
+the model reasoning well over the wrong evidence, because the retrieval
+layer feeding it is weak. Three fixes, each closing a distinct gap:
+
+1. **HyDE query expansion** — generate a hypothetical answer to the
+   query and retrieve using that instead of the raw question, closing
+   the vocabulary gap between how questions are phrased and how real
+   documents are written (`hyde_expand`, `hyde_retrieve`)
+2. **Hybrid retrieval with RRF** — combine dense (meaning-based) and
+   BM25 (exact-match) search, fused by rank position rather than raw
+   score, so neither method's blind spots go uncovered
+   (`HybridRetriever`, `reciprocal_rank_fusion`)
+3. **Cross-encoder reranking** — re-score the fused candidate set
+   jointly against the query before handing the final top-N to the LLM
+   (`rerank`, `make_bge_reranker`)
+
+All model/LLM calls are injected as callables, so the pipeline is fully
+testable without a live API key or a downloaded reranker model. Run a
+quick smoke test directly:
+
+```bash
+python retrieval_accuracy.py
+```
+
+Or open `retrieval_accuracy_demo.ipynb` for a full walkthrough on a
+synthetic HR policy scenario, comparing a naive single-method baseline
+against each fix added in sequence — see the LinkedIn article "Your RAG
+Accuracy Problem Isn't the Model. It's the Retrieval." for the full
+writeup with plain-language explanations and real-world examples of
+each failure mode.
+
 ## Agentic RAG — retrieval as a decision, not a fixed step
 
 `agentic-rag/agentic_rag.py` addresses a different problem: most RAG chains
