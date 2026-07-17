@@ -130,6 +130,35 @@ three queries that each take a different path through the graph: a direct
 answer with no retrieval, a single successful retrieval pass, and a
 reformulate-and-retry pass on a vaguely worded query.
 
+## Agent guardrails — enforcement outside the model
+
+`agent-guardrails/agent_guardrails.py` addresses a different kind of failure: not a
+retrieval accuracy problem, but an agent security one. Once an agent can take real
+actions (send an email, issue a refund, delete a file), a successful prompt injection
+stops being an embarrassing wrong answer and becomes an actual unauthorized action.
+
+`AgentGuardrail` is a minimal enforcement layer that sits between an agent's proposed
+tool calls and the systems those tools actually touch:
+
+1. **Least-privilege allowlisting** — an action must be explicitly known to run at all;
+   unknown is not treated as safe (`ALLOWED_ACTIONS`)
+2. **Mandatory human approval on high-risk actions** — refunds, deletions, transfers,
+   and external sends always require a second, independent check, regardless of how
+   confident the agent is or what the triggering content claims (`HIGH_RISK_ACTIONS`)
+3. **Append-only audit logging** — every proposal, approval/denial, and outcome is
+   logged before and after the decision, so the record exists whether or not the
+   action succeeded (`AuditLog`)
+
+Approval and execution are injected as callables, so the class is testable without a
+real human reviewer or a real downstream system, and can be dropped into any agent
+framework.
+
+Open `agent-guardrails/agent_guardrail_demo.ipynb` for an executed walkthrough that
+recreates a real scenario: a customer email carrying a hidden instruction attempting
+to trigger a $4,500 refund and forward the customer's order history externally. The
+notebook shows the same proposed action handled twice — once with no guardrail
+(it just runs), and once through `AgentGuardrail` (it's blocked, and logged).
+
 ## Related work
 
 - A. K. Pandey and S. S. Roy, "Extractive Question Answering Over Ancient Scriptures Texts Using
