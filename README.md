@@ -104,6 +104,39 @@ Accuracy Problem Isn't the Model. It's the Retrieval." for the full
 writeup with plain-language explanations and real-world examples of
 each failure mode.
 
+## HyDE — closing the query/document register gap
+
+`hyde/hyde.py` isolates the HyDE technique referenced briefly in the retrieval
+accuracy module above into its own deep-dive. It addresses one specific
+failure mode: casual user queries and formally written documents sit further
+apart in embedding space than their meaning alone would suggest, so direct
+query-to-document retrieval underperforms even when the right document
+exists in the index.
+
+1. **Hypothetical document generation** — generate a plausible (not
+   necessarily correct) answer to the query first, written in the target
+   corpus's register, via a pluggable `Generator` interface
+   (`TemplateGenerator` for offline/demo use, `AnthropicGenerator` for
+   production)
+2. **Embed the hypothetical answer, not the raw query** — because an answer
+   is written in the same style as real documents, it lands closer to the
+   correct document in vector space than the original question would
+   (`HydeRetriever.retrieve`)
+3. **Ensemble HyDE** — generate several hypothetical documents and average
+   their embeddings to smooth out noise from any single generation
+   (`HydeRetriever.retrieve_ensemble`)
+
+The embedder and generator are both swappable — this module uses TF-IDF
+embeddings so the demo notebook runs fully offline without API keys, but the
+retrieval logic is unchanged when swapped for a real embedding model and LLM.
+
+Open `hyde/hyde_demo.ipynb` for an executed walkthrough comparing direct
+retrieval against HyDE retrieval on a synthetic support-documentation
+corpus — top-1 retrieval accuracy goes from 50% to 100% on the test set once
+HyDE is introduced. See the LinkedIn article "Your Users Don't Search the
+Way Your Documents Are Written. Here's the Algorithm That Fixes That." for
+the full writeup with plain-language explanations and real-world examples.
+
 ## Agentic RAG — retrieval as a decision, not a fixed step
 
 `agentic-rag/agentic_rag.py` addresses a different problem: most RAG chains
